@@ -240,6 +240,7 @@
 
     LeproFriends.prototype.toggleShow = function(event) {
         $(event.target).next().toggle();
+        return false;
     };
 
     var lepro = new LeproFriends();
