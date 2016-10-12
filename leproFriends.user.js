@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.3
+// @version      0.2.4
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
@@ -201,8 +201,9 @@
 
     LeproFriends.prototype.checkGame = function (data, url, num, last) {
         var self = this;
-        var els = $($.parseHTML(data)).find('.player a');
-        var casting = $($.parseHTML(data)).find('#producer');
+        var $page = $($.parseHTML(data));
+        var els = $page.find('.player a');
+        var casting = $page.find('#producer');
 
         var $users = $.map(els, function (el) {
             return $(el);
