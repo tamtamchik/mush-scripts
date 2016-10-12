@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.2
+// @version      0.2.3
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
@@ -169,8 +169,12 @@
     }
 
     LeproFriends.prototype.getFriends = function (data) {
-        var contacts = new tid_ContactDecoder(window.sessionStorage.tid_contact);
-        this.friends = contacts.read();
+        if (window.sessionStorage.tid_contact) {
+            var contacts = new tid_ContactDecoder(window.sessionStorage.tid_contact);
+            this.friends = contacts.read();
+        } else {
+            setTimeout($.proxy(this.getFriends, this), 100);
+        }
     };
 
     LeproFriends.prototype.getGames = function (data) {
