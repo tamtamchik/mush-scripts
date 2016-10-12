@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.1
+// @version      0.2.2
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
@@ -156,6 +156,8 @@
     function LeproFriends() {
         this.friends = [];
         this.games = [];
+        this.username = $(window.sessionStorage.tid_bar).find('span.name').text();
+
         var href = '';
         if (window.location.pathname != '/me') {
             href = window.location.pathname;
@@ -211,8 +213,9 @@
 
         var $list = $('<div style="display:none">');
         $.each(res, function (i) {
+            var uclass = (res[i].text() == self.username) ? 'tid_userUnknown' : 'tid_userFriend';
             res[i]
-                .addClass('tid_user tid_userBg tid_userFriend tid_parsed')
+                .addClass('tid_user tid_userBg ' + uclass + ' tid_parsed')
                 .css('margin','2px')
                 .css('display','inline-block');
 
