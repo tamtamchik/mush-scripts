@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.4
+// @version      0.2.5
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
@@ -187,15 +187,16 @@
 
     LeproFriends.prototype.findGamesWithFriends = function () {
         var i = 0, j = 1, self = this;
-
+        var promise = $.when();
+        
         $.each(this.games, function (game) {
-            setTimeout(function() {
-              $.get(self.games[game], function (data) {
-                  var last = (game == self.games.length - 1);
-                  var num = self.games.length - i++;
-                  self.checkGame(data, self.games[game], num,last);
-              });
-            }, 250 * j++);
+            promise = promise.then(function(){
+                return $.get(self.games[game]);
+            }).then(function(data){
+                var last = (game == self.games.length - 1);
+                var num = self.games.length - i++;
+                self.checkGame(data, self.games[game], num,last);
+            });
         });
     };
 
