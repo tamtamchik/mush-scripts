@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.6
+// @version      0.2.7
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
@@ -158,7 +158,7 @@
         this.games = [];
         this.username = '';
         this.me = '';
-        $('.butmini').after('<img class="tid_loadingSearch" src="//data.twinoid.com/img/loading.gif">');
+        $('#cdTrips .butmini').after('<img class="tid_loadingSearch" src="//data.twinoid.com/img/loading.gif">');
     }
 
     LeproFriends.prototype.getSessionData = function (data) {
