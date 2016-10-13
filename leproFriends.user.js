@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.5
+// @version      0.2.6
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
@@ -156,24 +156,23 @@
     function LeproFriends() {
         this.friends = [];
         this.games = [];
-        this.username = $(window.sessionStorage.tid_bar).find('span.name').text();
-
-        var href = '';
-        if (window.location.pathname != '/me') {
-            href = window.location.pathname;
-        } else {
-            href = $('<div>').html(window.sessionStorage.tid_bar).contents()
-                .find('.twinoidAvatar').parent().attr('href');
-        }
-        this.me = href.substr(href.lastIndexOf('/') + 1);
+        this.username = '';
+        this.me = '';
+        $('.butmini').after('<img class="tid_loadingSearch" src="//data.twinoid.com/img/loading.gif">');
     }
 
-    LeproFriends.prototype.getFriends = function (data) {
+    LeproFriends.prototype.getSessionData = function (data) {
         if (window.sessionStorage.tid_contact) {
             var contacts = new tid_ContactDecoder(window.sessionStorage.tid_contact);
             this.friends = contacts.read();
+            this.username = $(window.sessionStorage.tid_bar).find('span.name').text();
+            var href = (window.location.pathname != '/me') ?
+            window.location.pathname :
+            $('<div>').html(window.sessionStorage.tid_bar)
+                .contents().find('.twinoidAvatar').parent().attr('href');
+            this.me = href.substr(href.lastIndexOf('/') + 1);
         } else {
-            setTimeout($.proxy(this.getFriends, this), 100);
+            setTimeout($.proxy(this.getSessionData, this), 100);
         }
     };
 
@@ -188,7 +187,7 @@
     LeproFriends.prototype.findGamesWithFriends = function () {
         var i = 0, j = 1, self = this;
         var promise = $.when();
-        
+
         $.each(this.games, function (game) {
             promise = promise.then(function(){
                 return $.get(self.games[game]);
@@ -227,6 +226,7 @@
 
             $list.append(res[i]).append('<br>');
         });
+        $('.butmini[href="' + url +'"]').next().remove();
 
         // A bit crappy, but will do the job...
         if (casting.length) {
@@ -250,12 +250,11 @@
     };
 
     var lepro = new LeproFriends();
-    lepro.getFriends();
-
     var d = $.Deferred();
 
-    d.then($.proxy(lepro.getGames, lepro))
-     .then($.proxy(lepro.findGamesWithFriends, lepro));
+    d.then($.proxy(lepro.getSessionData, lepro))
+        .then($.proxy(lepro.getGames, lepro))
+        .then($.proxy(lepro.findGamesWithFriends, lepro));
 
     d.resolve();
 
