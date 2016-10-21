@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.2.8
+// @version      0.3.0
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
 // @include      http://mush.twinoid.com/me*
 // @include      http://mush.twinoid.com/u/profile/*
+// @include      http://mush.vg/me*
+// @include      http://mush.vg/u/profile/*
 // @downloadURL  https://github.com/tamtamchik/mush-scripts/raw/master/leproFriends.user.js
 // ==/UserScript==
 
