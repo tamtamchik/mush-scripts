@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         LeproFriends
-// @version      0.3.0
+// @namespace    http://tamtamchika.net/
+// @version      0.3.1
 // @description  Add friends to your Voyages page.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js
