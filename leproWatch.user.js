@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.0.0
+// @version      1.0.1
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -23,7 +23,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "0.0.0";
+    Main.LeproWatch.version = GM_info.script.version || "1.0.1";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -36,7 +36,6 @@ var inline_src = (<><![CDATA[
             'Patrol Ship Tomorrowland', 'Patrol Ship Olive Grove', 'Patrol Ship Yasmin', 'Patrol Ship Wolf', 'Patrol Ship E-Street', 'Patrol Ship Eponine', 'Patrol Ship Carpe Diem', 'Pasiphae',
             'Front Corridor', 'Central Corridor', 'Rear Corridor', 'Planet', 'Icarus Bay', 'Alpha Dorm', 'Bravo Dorm',
             'Front Storage', 'Centre Alpha Storage', 'Rear Alpha Storage', 'Centre Bravo Storage', 'Rear Bravo Storage', 'Outer Space', 'Limbo'];
-        Main.LeproWatch.roomOrder = [1, 3, 29, 2, 30, 0, 25, 32, 11, 34, 14, 9, 10, 13, 24, 31, 8, 28, 6, 5, 4, 36, 23, 22, 20, 21, 17, 16, 19, 18, 27, 33, 12, 35, 15, 26, 7];
     }
     else if (window.location.href.indexOf('mush.twinoid.es') !== -1) {
         Main.LeproWatch.language = 'es';
@@ -47,7 +46,6 @@ var inline_src = (<><![CDATA[
             'Patrullero Longane', 'Patrullero Jujube', 'Patrullero Tamarindo', 'Patrullero Sócrates', 'Patrullero Epicuro', 'Patrullero Platón', 'Patrullero Wallis', 'Pasiphae',
             'Pasillo delantero', 'Pasillo central', 'Pasillo trasero', 'Planeta', 'Icarus', 'Dormitorio Alpha', 'Dormitorio Beta',
             'Almacén delantero', 'Almacén Alpha central', 'Almacén Alpha trasero', 'Almacén Beta central', 'Almacén Beta trasero', 'Espacio infinito', 'El limbo'];
-        Main.LeproWatch.roomOrder = [32, 33, 34, 35, 31, 11, 10, 12, 14, 13, 15, 7, 29, 30, 5, 36, 28, 8, 6, 4, 25, 24, 26, 23, 20, 17, 16, 21, 19, 18, 22, 27, 1, 3, 2, 0, 9];
     }
     else {
         Main.LeproWatch.language = '';
@@ -58,7 +56,6 @@ var inline_src = (<><![CDATA[
             'Patrouilleur Longane', 'Patrouilleur Jujube', 'Patrouilleur Tamarin', 'Patrouilleur Socrate', 'Patrouilleur Epicure', 'Patrouilleur Planton', 'Patrouilleur Wallis', 'Pasiphae',
             'Couloir avant', 'Couloir central', 'Couloir arrière', 'Planète', 'Baie Icarus', 'Dortoir Alpha', 'Dortoir Beta',
             'Stockage Avant', 'Stockage Alpha centre', 'Stockage Alpha arrière', 'Stockage Beta centre', 'Stockage Beta arrière', 'Espace infini', 'Les Limbes'];
-        Main.LeproWatch.roomOrder = [1, 3, 2, 28, 26, 24, 25, 29, 30, 36, 5, 8, 6, 4, 23, 20, 17, 16, 21, 19, 18, 22, 27, 0, 7, 9, 33, 32, 31, 35, 34, 12, 10, 11, 15, 13, 14];
     }
 
     Main.LeproWatch.connectToDB = () => {
@@ -89,9 +86,9 @@ var inline_src = (<><![CDATA[
         return parseInt($('.roomChanger').val());
     };
 
-    Main.LeproWatch.getLogs = () => {
+    Main.LeproWatch.parseLogs = () => {
         console.log('[LeproWatch] Getting logs...');
-        if (!Main.LeproWatch.connection) return;
+        if ( ! Main.LeproWatch.connection) return;
 
         const records = Array.from(document.querySelectorAll('#localChannel .cdChatLine')).reverse();
 
@@ -100,7 +97,7 @@ var inline_src = (<><![CDATA[
             const text = el.innerHTML
                 .replace(/\s+/ig, ' ')
                 .replace(/<span class="ago">.*?<\/span>/ig, '')
-                .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png" class="recent">/ig, '');
+                .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png".*?>/ig, '');
 
             return {
                 'id': parseInt(el.dataset.id),
@@ -138,6 +135,7 @@ var inline_src = (<><![CDATA[
 
     Main.LeproWatch.loadLogs = (room) => {
         room = (Number.isInteger(room)) ? room : Main.LeproWatch.getSelectedRoomId();
+        Main.LeproWatch.parseLogs();
         console.log('[LeproWatch] Loading logs for room ' + Main.LeproWatch.roomNames[room] + '...');
 
         const roomRange = IDBKeyRange.only(room);
@@ -175,6 +173,11 @@ var inline_src = (<><![CDATA[
     Main.LeproWatch.renderLogs = (logs) => {
         console.log('[LeproWatch] Rendering logs...');
         Main.LeproWatch.clearLogView();
+
+        if (logs.length === 0) {
+            setTimeout(Main.LeproWatch.loadLogs, 200);
+            return;
+        }
 
         let lastCycle = 0;
         const content = $('#leprowatch_content').find('.logs');
@@ -232,12 +235,12 @@ var inline_src = (<><![CDATA[
         console.log('[LeproWatch] Filling DOM...');
         const mainDiv = $('<div>').css("color", "rgb(9, 10, 97)").appendTo($("#leprowatch_content").empty());
         $('<div>').addClass('objtitle').html("<img src='http://twinoid.com/img/icons/archive.png'> LeproWatch archive! <img src='http://twinoid.com/img/icons/archive.png'>").appendTo(mainDiv);
-        const menu = $('<div>').addClass('replybuttons').appendTo(mainDiv);
+        const menu = $('<div>').addClass('replybuttons').css({padding: '2px 7px 0'}).appendTo(mainDiv);
         const roomSelector = $('<select>').addClass('roomChanger').appendTo(mainDiv);
         const logs = $('<div>').addClass('logs').appendTo(mainDiv);
 
         roomSelector.css({
-            right: '2px',
+            right: '7px',
             position: 'relative',
             background: 'linear-gradient(to bottom, #008ee5 0%,#008ee5 50%,#0070dd 51%,#0070dd 100%)',
             border: '1px solid #000',
@@ -259,8 +262,7 @@ var inline_src = (<><![CDATA[
 
         roomSelector.on('change', e => Main.LeproWatch.loadLogs(e.target.value));
 
-        // Main.LeproWatch.addButton('/img/icons/ui/projects_done.png', 'Sync', true, Main.LeproWatch.getLogs, menu);
-        // Main.LeproWatch.addButton('http://twinoid.com/img/icons/refresh.png', 'Reload', true, Main.LeproWatch.loadLogs, menu);
+        Main.LeproWatch.addButton('http://twinoid.com/img/icons/refresh.png', 'Reload', true, Main.LeproWatch.loadLogs, menu);
         Main.LeproWatch.addButton('/img/icons/ui/close.png', 'Reset', true, Main.LeproWatch.resetLogs, menu);
     };
 
@@ -299,17 +301,17 @@ var inline_src = (<><![CDATA[
         Main.LeproWatch.connectToDB();
         Main.LeproWatch.addArchiveTab();
 
-        document.addEventListener('lw:connected', Main.LeproWatch.getLogs);
+        document.addEventListener('lw:connected', Main.LeproWatch.parseLogs);
 
         setInterval(function () {
-            if (!$('#leprowatch').length) { //If the page has been updated
+            if ( ! $('#leprowatch').length) { //If the page has been updated
                 Main.LeproWatch.addArchiveTab();
-                Main.LeproWatch.getLogs();
+                Main.LeproWatch.parseLogs();
             }
         }, 1000);
     };
 
-    if (!window.indexedDB) {
+    if ( ! window.indexedDB) {
         window.alert("This plugin will not work on your browser! Please use modern one!");
     } else {
         Main.LeproWatch.init();
