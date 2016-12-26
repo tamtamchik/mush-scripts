@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.1.3
+// @version      1.1.4
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -24,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.1.3";
+    Main.LeproWatch.version = GM_info.script.version || "1.1.4";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -222,7 +222,9 @@ var inline_src = (<><![CDATA[
             const roomName = Main.LeproWatch.roomNames[log.room];
 
             if (log.cycle !== lastCycle) {
-                const row = $('<div>').addClass('day_cycle').append(`<strong>&nbsp;Cycle ${log.cycle}</strong>`);
+                const day = Math.floor((log.cycle+1) / 8) + 1;
+                const cycle = Math.ceil((log.cycle+1) % 8);
+                const row = $('<div>').addClass('day_cycle').append(`<strong>&nbsp;day ${day} Cycle ${cycle} (Cycle ${log.cycle})</strong>`);
                 row.appendTo(content);
                 lastCycle = log.cycle;
             }
