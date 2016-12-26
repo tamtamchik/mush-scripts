@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.1.0
+// @version      1.1.1
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -24,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.1.0";
+    Main.LeproWatch.version = GM_info.script.version || "1.1.1";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -277,12 +277,15 @@ var inline_src = (<><![CDATA[
         roomSelector.css({
             right: '7px',
             position: 'relative',
-            background: 'linear-gradient(to bottom, #008ee5 0%,#008ee5 50%,#0070dd 51%,#0070dd 100%)',
+            background: '#0070dd linear-gradient(to bottom, #008ee5 0%,#008ee5 50%,#0070dd 51%,#0070dd 100%)',
             border: '1px solid #000',
             padding: 0,
-            fontSize: '9px',
+            fontSize: '10px',
             float: 'right',
-            top: '1px'
+            top: '2px',
+            height: '16px',
+            lineHeight: '16px',
+            width: '150px'
         });
 
         searchBox.attr({
@@ -294,7 +297,10 @@ var inline_src = (<><![CDATA[
             margin: '0 10px 0 0',
             float: 'left',
             border: '1px solid black',
-            color: 'black'
+            color: 'black',
+            height: '12px',
+            fontSize: '12px',
+            lineHeight: '12px'
         });
 
         const current = Main.LeproWatch.getRoomId();
