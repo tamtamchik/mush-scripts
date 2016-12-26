@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.0.1
+// @version      1.1.0
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.18.2/babel.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.16.0/polyfill.js
 // @require      https://code.jquery.com/jquery-2.2.1.min.js
+// @require      https://raw.githubusercontent.com/cowboy/jquery-throttle-debounce/v1.1/jquery.ba-throttle-debounce.min.js
 // @include      http://mush.twinoid.com/
 // @include      http://mush.vg/
 // @downloadURL  https://github.com/tamtamchik/mush-scripts/raw/master/leproWatch.user.js
@@ -23,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.0.1";
+    Main.LeproWatch.version = GM_info.script.version || "1.1.0";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -133,6 +134,29 @@ var inline_src = (<><![CDATA[
         }
     };
 
+    Main.LeproWatch.search = (text) => {
+        console.log('[LeproWatch] Searching for "' + text + '"...');
+        if (text === '') {
+            Main.LeproWatch.loadLogs();
+            return;
+        }
+
+        const transaction = Main.LeproWatch.connection.transaction(['logs'], 'readonly');
+        const logStore = transaction.objectStore('logs');
+
+        let rows = [];
+
+        logStore.openCursor().onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                if (cursor.value.text.includes(text)) rows.push(cursor.value);
+                cursor.continue();
+            } else {
+                Main.LeproWatch.renderLogs(rows, true);
+            }
+        }
+    };
+
     Main.LeproWatch.loadLogs = (room) => {
         room = (Number.isInteger(room)) ? room : Main.LeproWatch.getSelectedRoomId();
         Main.LeproWatch.parseLogs();
@@ -170,7 +194,7 @@ var inline_src = (<><![CDATA[
         $('#leprowatch_content').find('.logs').empty();
     };
 
-    Main.LeproWatch.renderLogs = (logs) => {
+    Main.LeproWatch.renderLogs = (logs, search = false) => {
         console.log('[LeproWatch] Rendering logs...');
         Main.LeproWatch.clearLogView();
 
@@ -180,19 +204,29 @@ var inline_src = (<><![CDATA[
         }
 
         let lastCycle = 0;
+        let lastRoom = '';
         const content = $('#leprowatch_content').find('.logs');
 
         logs.sort((a, b) => {
             if (a.cycle !== b.cycle) return a.cycle > b.cycle ? -1 : 1;
+            if (a.time !== b.time) return a.time > b.time ? -1 : 1;
             return a.index > b.index ? -1 : 1;
         });
 
         logs.forEach(log => {
 
+            const roomName = Main.LeproWatch.roomNames[log.room];
+
             if (log.cycle !== lastCycle) {
                 const row = $('<div>').addClass('day_cycle').append(`<strong>&nbsp;Cycle ${log.cycle}</strong>`);
                 row.appendTo(content);
                 lastCycle = log.cycle;
+            }
+
+            if (roomName !== lastRoom && search) {
+                const row = $('<div>').addClass('day_cycle mush').append(`&nbsp;${roomName}`);
+                row.appendTo(content);
+                lastRoom = roomName;
             }
 
             const row = $('<div>').addClass('cdChatLine').append(log.text);
@@ -237,6 +271,7 @@ var inline_src = (<><![CDATA[
         $('<div>').addClass('objtitle').html("<img src='http://twinoid.com/img/icons/archive.png'> LeproWatch archive! <img src='http://twinoid.com/img/icons/archive.png'>").appendTo(mainDiv);
         const menu = $('<div>').addClass('replybuttons').css({padding: '2px 7px 0'}).appendTo(mainDiv);
         const roomSelector = $('<select>').addClass('roomChanger').appendTo(mainDiv);
+        const searchBox = $('<input type="text">').addClass('searchBox').appendTo(menu);
         const logs = $('<div>').addClass('logs').appendTo(mainDiv);
 
         roomSelector.css({
@@ -250,6 +285,18 @@ var inline_src = (<><![CDATA[
             top: '1px'
         });
 
+        searchBox.attr({
+            placeholder: 'Search'
+        });
+
+        searchBox.css({
+            width: '100px',
+            margin: '0 10px 0 0',
+            float: 'left',
+            border: '1px solid black',
+            color: 'black'
+        });
+
         const current = Main.LeproWatch.getRoomId();
         Main.LeproWatch.roomNames.forEach((i, index) => {
             const roomName = i;
@@ -260,10 +307,11 @@ var inline_src = (<><![CDATA[
             option.appendTo(roomSelector);
         });
 
-        roomSelector.on('change', e => Main.LeproWatch.loadLogs(e.target.value));
-
         Main.LeproWatch.addButton('http://twinoid.com/img/icons/refresh.png', 'Reload', true, Main.LeproWatch.loadLogs, menu);
         Main.LeproWatch.addButton('/img/icons/ui/close.png', 'Reset', true, Main.LeproWatch.resetLogs, menu);
+
+        roomSelector.on('change', e => Main.LeproWatch.loadLogs(e.target.value));
+        searchBox.on('keyup', $.debounce(300, e => Main.LeproWatch.search(e.target.value)));
     };
 
     Main.LeproWatch.addArchiveTab = () => {
