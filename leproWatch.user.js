@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.1.1
+// @version      1.1.2
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -24,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.1.1";
+    Main.LeproWatch.version = GM_info.script.version || "1.1.2";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -149,7 +149,7 @@ var inline_src = (<><![CDATA[
         logStore.openCursor().onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
-                if (cursor.value.text.includes(text)) rows.push(cursor.value);
+                if (cursor.value.text.toLowerCase().includes(text.toLowerCase())) rows.push(cursor.value);
                 cursor.continue();
             } else {
                 Main.LeproWatch.renderLogs(rows, true);
