@@ -20,13 +20,23 @@ var inline_src = (<><![CDATA[
     /* jshint esnext: false */
     /* jshint esversion: 6 */
 
+    // Base variables and configurations.
+
+    //noinspection JSUnresolvedVariable
     const console = unsafeWindow.console;
+    //noinspection JSUnresolvedVariable
     const Main = unsafeWindow.Main;
 
+    //noinspection JSUnresolvedFunction, JSUnresolvedVariable
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
+    //noinspection JSUnresolvedVariable
     Main.LeproWatch.version = GM_info.script.version || "1.2.2";
+    //noinspection JSUnresolvedVariable
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
+
+    const info = (message) => console.log(message);
+    const error = (message) => console.error(message);
 
     if (window.location.href.indexOf('mush.twinoid.com') !== -1) {
         Main.LeproWatch.language = 'en';
@@ -59,37 +69,32 @@ var inline_src = (<><![CDATA[
             'Stockage Avant', 'Stockage Alpha centre', 'Stockage Alpha arrière', 'Stockage Beta centre', 'Stockage Beta arrière', 'Espace infini', 'Les Limbes'];
     }
 
-    Main.LeproWatch.connectToDB = () => {
-        console.log('[LeproWatch] Connecting to database...');
-        Main.LeproWatch.db = Main.LeproWatch.indexedDB.open(`leprowatch_${Main.LeproWatch.language}`, 3);
+    // Model layer.
 
-        Main.LeproWatch.db.onerror = (e) => {
-            console.error(e);
-        };
+    /**
+     * Connect to the database.
+     */
+    Main.LeproWatch.connectToDatabase = () => {
+        info('[LeproWatch] Connecting to database...');
+
+        Main.LeproWatch.db = Main.LeproWatch.indexedDB.open(`leprowatch_${Main.LeproWatch.language}`, 3);
+        Main.LeproWatch.db.onerror = (e) => error(e);
         Main.LeproWatch.db.onsuccess = (c) => {
             Main.LeproWatch.connection = c.target.result;
             Main.LeproWatch.emitEvent('lw:connected');
         };
-        Main.LeproWatch.db.onupgradeneeded = (e) => {
-            const objectStore = e.target.result.createObjectStore('logs', {keyPath: 'id'});
-            objectStore.createIndex('room', 'room', {unique: false});
-            Main.LeproWatch.connectToDB();
+        Main.LeproWatch.db.onupgradeneeded = (c) => {
+            //noinspection JSUnresolvedFunction
+            c.target.result
+                .createObjectStore('logs', {keyPath: 'id'})
+                .createIndex('room', 'room', {unique: false});
+            Main.LeproWatch.connectToDatabase();
         };
     };
 
-    Main.LeproWatch.getRoomId = () => {
-        console.log('[LeproWatch] Getting room id...');
-        return Main.LeproWatch.roomNames.indexOf(document.querySelector('#input').attributes.d_name.value);
-    };
-
-    Main.LeproWatch.getSelectedRoomId = () => {
-        console.log('[LeproWatch] Getting selected room id...');
-        return parseInt(document.querySelector('.roomChanger').value);
-    };
-
-    Main.LeproWatch.parseLogs = () => {
+    Main.LeproWatch.collectLogs = () => {
         console.log('[LeproWatch] Getting logs...');
-        if ( ! Main.LeproWatch.connection) return;
+        if (!Main.LeproWatch.connection) return;
 
         const records = Array.from(document.querySelectorAll('#localChannel .cdChatLine')).reverse();
 
@@ -101,6 +106,7 @@ var inline_src = (<><![CDATA[
                 .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png".*?>/ig, '')
                 .trim();
 
+            //noinspection JSUnresolvedVariable
             return {
                 'id': parseInt(el.dataset.id),
                 'cycle': parseInt(el.dataset.c),
@@ -116,43 +122,48 @@ var inline_src = (<><![CDATA[
         Main.LeproWatch.saveLogs(logs);
     };
 
-    Main.LeproWatch.emitEvent = (name) => {
-        console.log('[LeproWatch] Emitting event ' + name + '...');
-        document.dispatchEvent(new Event(name));
-    };
-
     Main.LeproWatch.saveLogs = (logs) => {
         console.log('[LeproWatch] Saving logs...');
+
+        //noinspection JSCheckFunctionSignatures
         let transaction = Main.LeproWatch.connection.transaction(['logs'], 'readwrite');
+        //noinspection JSUnresolvedFunction
         let logStore = transaction.objectStore('logs');
-        for (let i in logs) {
-            let req = logStore.get(parseInt(logs[i].id));
-            req.onsuccess = function (e) {
+        for (let i = 0; i < logs.length; i++) {
+            const req = logStore.get(parseInt(logs[i].id));
+            req.onsuccess = (e) => {
                 if (!e.target.result) {
-                    let req2 = logStore.add(logs[i]);
-                    req2.onerror = e => console.log(e);
+                    const req2 = logStore.add(logs[i]);
+                    req2.onerror = e => error(e);
                 }
             };
-            req.onerror = e => console.log(e);
+            req.onerror = e => error(e);
         }
     };
 
     Main.LeproWatch.search = (text) => {
         console.log('[LeproWatch] Searching for "' + text + '"...');
+
         if (text === '') {
             Main.LeproWatch.loadLogs();
             return;
         }
 
+        //noinspection JSCheckFunctionSignatures
         const transaction = Main.LeproWatch.connection.transaction(['logs'], 'readonly');
+        //noinspection JSUnresolvedFunction
         const logStore = transaction.objectStore('logs');
 
         let rows = [];
 
+        //noinspection JSUnresolvedFunction
         logStore.openCursor().onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
-                if (cursor.value.text.toLowerCase().includes(text.toLowerCase())) rows.push(cursor.value);
+                if (cursor.value.text.toLowerCase().includes(text.toLowerCase())) {
+                    rows.push(cursor.value);
+                }
+                //noinspection JSUnresolvedFunction
                 cursor.continue();
             } else {
                 if (rows.length === 0) {
@@ -164,23 +175,49 @@ var inline_src = (<><![CDATA[
         }
     };
 
+    // Helpers.
+
+    Main.LeproWatch.getRoomId = () => {
+        info('[LeproWatch] Getting room id...');
+
+        //noinspection JSUnresolvedVariable
+        return Main.LeproWatch.roomNames.indexOf(document.querySelector('#input').attributes.d_name.value);
+    };
+
+    Main.LeproWatch.getSelectedRoomId = () => {
+        console.log('[LeproWatch] Getting selected room id...');
+
+        return parseInt(document.querySelector('.roomChanger').value);
+    };
+
+    Main.LeproWatch.emitEvent = (name) => {
+        console.log('[LeproWatch] Emitting event ' + name + '...');
+
+        document.dispatchEvent(new Event(name));
+    };
+
     Main.LeproWatch.loadLogs = (room) => {
         room = (Number.isInteger(room)) ? room : Main.LeproWatch.getSelectedRoomId();
 
-        Main.LeproWatch.parseLogs();
+        Main.LeproWatch.collectLogs();
 
         console.log('[LeproWatch] Loading logs for room ' + Main.LeproWatch.roomNames[room] + '...');
 
+        //noinspection JSUnresolvedVariable,JSUnresolvedFunction
         const roomRange = IDBKeyRange.only(room);
+        //noinspection JSCheckFunctionSignatures
         const transaction = Main.LeproWatch.connection.transaction(['logs'], 'readonly');
+        //noinspection JSUnresolvedFunction
         const logStore = transaction.objectStore('logs').index('room');
 
         let rows = [];
 
+        //noinspection JSUnresolvedFunction
         logStore.openCursor(roomRange).onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
                 rows.push(cursor.value);
+                //noinspection JSUnresolvedFunction
                 cursor.continue();
             } else {
                 Main.LeproWatch.renderLogs(rows);
@@ -193,6 +230,7 @@ var inline_src = (<><![CDATA[
     Main.LeproWatch.resetLogs = () => {
         console.log('[LeproWatch] Reset logs...');
 
+        //noinspection JSCheckFunctionSignatures,JSUnresolvedFunction
         Main.LeproWatch.connection.transaction(['logs'], 'readwrite').objectStore('logs').clear();
         Main.LeproWatch.clearLogView();
     };
@@ -335,8 +373,8 @@ var inline_src = (<><![CDATA[
 
     Main.LeproWatch.addArchiveTab = () => {
         console.log('[LeproWatch] Activating tab...');
-        const tabschat = $("#cdTabsChat");
-        const tab = $("<li>").addClass("tab taboff").css('margin-right', '3px').appendTo(tabschat);
+        const tabsChat = $("#cdTabsChat");
+        const tab = $("<li>").addClass("tab taboff").css('margin-right', '3px').appendTo(tabsChat);
         const content = $("<div>").addClass("cdLeptoWatchTab").attr("id", "leprowatch_content").appendTo($("#chatBlock"));
         content.hide();
 
@@ -349,12 +387,16 @@ var inline_src = (<><![CDATA[
         $("<img>").attr("src", "http://twinoid.com/img/icons/archive.png").appendTo(tab);
 
         tab.on("mouseover", function () {
-            Main.showTip($(this)[0], "<div class='tiptop'><div class='tipbottom'><div class='tipbg'><div class='tipcontent'> <h1>LeproWatch</h1> <p>" + Main.LeproWatch.decs + "</p> </div></div></div></div>");
+            Main.showTip($(this)[0], `
+                <div class='tiptop'><div class='tipbottom'><div class='tipbg'><div class='tipcontent'> 
+                <h1>LeproWatch</h1> <p> ${Main.LeproWatch.decs} </p> 
+                </div></div></div></div>
+            `);
         }).on("mouseout", function () {
             Main.hideTip();
         });
 
-        tabschat.find("li").on("click", function () {
+        tabsChat.find("li").on("click", function () {
             Main.LeproWatch.selectTab(this);
         });
         Main.LeproWatch.fill();
@@ -365,21 +407,21 @@ var inline_src = (<><![CDATA[
     Main.LeproWatch.init = () => {
         console.log('[LeproWatch] Init...');
         Main.LeproWatch.currentRoom = Main.LeproWatch.getRoomId();
-        Main.LeproWatch.connectToDB();
+        Main.LeproWatch.connectToDatabase();
         Main.LeproWatch.addArchiveTab();
 
-        document.addEventListener('lw:connected', Main.LeproWatch.parseLogs);
+        document.addEventListener('lw:connected', Main.LeproWatch.collectLogs);
 
         setInterval(function () {
-            if ( ! $('#leprowatch').length) { //If the page has been updated
+            if (! document.querySelectorAll('#leprowatch').length) { //If the page has been updated
                 Main.LeproWatch.addArchiveTab();
-                Main.LeproWatch.parseLogs();
+                Main.LeproWatch.collectLogs();
             }
         }, 1000);
     };
 
-    if ( ! Main.LeproWatch.indexedDB) {
-        window.alert("This plugin will not work on your browser! Please use modern one!");
+    if (!Main.LeproWatch.indexedDB) {
+        window.alert("LeproWatch plugin will not work on your browser! Please use modern one!");
     } else {
         Main.LeproWatch.init();
     }
