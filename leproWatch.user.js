@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.2.1
+// @version      1.2.2
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -24,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.2.1";
+    Main.LeproWatch.version = GM_info.script.version || "1.2.2";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -99,7 +99,6 @@ var inline_src = (<><![CDATA[
                 .replace(/\s+/ig, ' ')
                 .replace(/<span class="ago">.*?<\/span>/ig, '')
                 .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png".*?>/ig, '')
-                .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/design\/pixel\.gif".*?>/ig, '')
                 .trim();
 
             return {
