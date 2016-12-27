@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.2.2
+// @version      1.2.3
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -30,7 +30,7 @@ var inline_src = (<><![CDATA[
     //noinspection JSUnresolvedFunction, JSUnresolvedVariable
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
     //noinspection JSUnresolvedVariable
-    Main.LeproWatch.version = GM_info.script.version || "1.2.2";
+    Main.LeproWatch.version = GM_info.script.version || "1.2.3";
     //noinspection JSUnresolvedVariable
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
@@ -106,6 +106,8 @@ var inline_src = (<><![CDATA[
                 .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png".*?>/ig, '')
                 .trim();
 
+            const classes = Array.from(el.classList).filter(item => item !== 'not_read');
+
             //noinspection JSUnresolvedVariable
             return {
                 'id': parseInt(el.dataset.id),
@@ -115,7 +117,7 @@ var inline_src = (<><![CDATA[
                 'time': Date.now(),
                 'text': el.textContent.trim(),
                 'index': index,
-                'classes': Array.from(el.classList).join(' ')
+                'classes': classes.join(' ')
             };
         });
 
