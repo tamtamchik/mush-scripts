@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.1.5
+// @version      1.2.0
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -24,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.1.5";
+    Main.LeproWatch.version = GM_info.script.version || "1.2.0";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -84,7 +84,7 @@ var inline_src = (<><![CDATA[
 
     Main.LeproWatch.getSelectedRoomId = () => {
         console.log('[LeproWatch] Getting selected room id...');
-        return parseInt($('.roomChanger').val());
+        return parseInt(document.querySelector('.roomChanger').value);
     };
 
     Main.LeproWatch.parseLogs = () => {
@@ -95,18 +95,22 @@ var inline_src = (<><![CDATA[
 
         const logs = records.map((el, index) => {
 
-            const text = el.innerHTML
+            const html = el.innerHTML
                 .replace(/\s+/ig, ' ')
                 .replace(/<span class="ago">.*?<\/span>/ig, '')
-                .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png".*?>/ig, '');
+                .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/icons\/ui\/recent\.png".*?>/ig, '')
+                .replace(/<img src="\/\/data\.mush\.twinoid\.com\/img\/design\/pixel\.gif".*?>/ig, '')
+                .trim();
 
             return {
                 'id': parseInt(el.dataset.id),
                 'cycle': parseInt(el.dataset.c),
                 'room': Main.LeproWatch.getRoomId(),
-                'text': text,
+                'html': html,
                 'time': Date.now(),
-                'index': index
+                'text': el.textContent.trim(),
+                'index': index,
+                'classes': Array.from(el.classList).join(' ')
             };
         });
 
@@ -163,7 +167,9 @@ var inline_src = (<><![CDATA[
 
     Main.LeproWatch.loadLogs = (room) => {
         room = (Number.isInteger(room)) ? room : Main.LeproWatch.getSelectedRoomId();
+
         Main.LeproWatch.parseLogs();
+
         console.log('[LeproWatch] Loading logs for room ' + Main.LeproWatch.roomNames[room] + '...');
 
         const roomRange = IDBKeyRange.only(room);
@@ -183,33 +189,28 @@ var inline_src = (<><![CDATA[
         }
     };
 
+    // UI functions
+
     Main.LeproWatch.resetLogs = () => {
         console.log('[LeproWatch] Reset logs...');
-        const transaction = Main.LeproWatch.connection.transaction(['logs'], 'readwrite');
-        const logStore = transaction.objectStore('logs');
-        logStore.clear();
+
+        Main.LeproWatch.connection.transaction(['logs'], 'readwrite').objectStore('logs').clear();
         Main.LeproWatch.clearLogView();
     };
-
-    // UI functions
 
     Main.LeproWatch.clearLogView = () => {
         console.log('[LeproWatch] Clearing log view...');
-        $('#leprowatch_content').find('.logs').empty();
+        document.querySelector('#leprowatch_content .logs').innerHTML = '';
     };
 
     Main.LeproWatch.renderLogs = (logs, search = false) => {
-        console.log('[LeproWatch] Rendering logs...');
         Main.LeproWatch.clearLogView();
 
-        if (logs.length === 0) {
-            setTimeout(Main.LeproWatch.loadLogs, 200);
-            return;
-        }
+        console.log('[LeproWatch] Rendering logs...');
 
-        let lastCycle = 0;
+        let lastCycle = -1;
         let lastRoom = '';
-        const content = $('#leprowatch_content').find('.logs');
+        const content = document.querySelector('#leprowatch_content .logs');
 
         logs.sort((a, b) => {
             if (a.cycle !== b.cycle) return a.cycle > b.cycle ? -1 : 1;
@@ -222,8 +223,8 @@ var inline_src = (<><![CDATA[
             const roomName = Main.LeproWatch.roomNames[log.room];
 
             if (log.cycle !== lastCycle) {
-                const day = Math.floor((log.cycle+1) / 8) + 1;
-                const cycle = Math.ceil((log.cycle+1) % 8);
+                const day = Math.floor((log.cycle + 1) / 8) + 1;
+                const cycle = Math.ceil((log.cycle + 1) % 8);
                 const row = $('<div>').addClass('day_cycle').append(`<strong>&nbsp;day ${day} Cycle ${cycle} (Cycle ${log.cycle})</strong>`);
                 row.appendTo(content);
                 lastCycle = log.cycle;
@@ -235,7 +236,7 @@ var inline_src = (<><![CDATA[
                 lastRoom = roomName;
             }
 
-            const row = $('<div>').addClass('cdChatLine').append(log.text);
+            const row = $('<div>').addClass(log.classes).append(log.html.trim());
             row.appendTo(content);
         });
     };
@@ -260,6 +261,10 @@ var inline_src = (<><![CDATA[
         const scriptTab = $($(el).attr('data-script-tab'));
         if (scriptTab.length) {
             $(scriptTab).show();
+        }
+        const functionTab = $($(el).attr('data-script-function'));
+        if (functionTab.length) {
+            functionTab();
         }
     };
 
@@ -372,7 +377,7 @@ var inline_src = (<><![CDATA[
         }, 1000);
     };
 
-    if ( ! window.indexedDB) {
+    if ( ! Main.LeproWatch.indexedDB) {
         window.alert("This plugin will not work on your browser! Please use modern one!");
     } else {
         Main.LeproWatch.init();
