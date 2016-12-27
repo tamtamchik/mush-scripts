@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.1.4
+// @version      1.1.5
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -24,7 +24,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
-    Main.LeproWatch.version = GM_info.script.version || "1.1.4";
+    Main.LeproWatch.version = GM_info.script.version || "1.1.5";
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
 
@@ -273,8 +273,11 @@ var inline_src = (<><![CDATA[
 
     Main.LeproWatch.fill = () => {
         console.log('[LeproWatch] Filling DOM...');
+
         const mainDiv = $('<div>').css("color", "rgb(9, 10, 97)").appendTo($("#leprowatch_content").empty());
+
         $('<div>').addClass('objtitle').html("<img src='http://twinoid.com/img/icons/archive.png'> LeproWatch archive! <img src='http://twinoid.com/img/icons/archive.png'>").appendTo(mainDiv);
+
         const menu = $('<div>').addClass('replybuttons').css({padding: '2px 7px 0'}).appendTo(mainDiv);
         const roomSelector = $('<select>').addClass('roomChanger').appendTo(mainDiv);
         const searchBox = $('<input type="text">').addClass('searchBox').appendTo(menu);
@@ -291,14 +294,12 @@ var inline_src = (<><![CDATA[
             top: '2px',
             height: '16px',
             lineHeight: '16px',
-            width: '150px'
+            width: '100px'
         });
 
         searchBox.attr({
             placeholder: 'Search'
-        });
-
-        searchBox.css({
+        }).css({
             width: '100px',
             margin: '0 10px 0 0',
             float: 'left',
