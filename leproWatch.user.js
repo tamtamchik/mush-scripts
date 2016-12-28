@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.2.4
+// @version      1.2.5
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -30,7 +30,7 @@ var inline_src = (<><![CDATA[
     //noinspection JSUnresolvedFunction, JSUnresolvedVariable
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
     //noinspection JSUnresolvedVariable
-    Main.LeproWatch.version = GM_info.script.version || "1.2.4";
+    Main.LeproWatch.version = GM_info.script.version || "1.2.5";
     //noinspection JSUnresolvedVariable
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
@@ -242,8 +242,14 @@ var inline_src = (<><![CDATA[
         document.querySelector('#leprowatch_content .logs').innerHTML = '';
     };
 
+    Main.LeproWatch.clearSearchInput = () => {
+        console.log('[LeproWatch] Clearing search input...');
+        document.querySelector('.searchBox').value = '';
+    };
+
     Main.LeproWatch.renderLogs = (logs, search = false) => {
         Main.LeproWatch.clearLogView();
+        if (!search) Main.LeproWatch.clearSearchInput();
 
         console.log('[LeproWatch] Rendering logs...');
 
@@ -343,9 +349,9 @@ var inline_src = (<><![CDATA[
         });
 
         searchBox.attr({
-            placeholder: 'Search'
+            placeholder: 'Search (all rooms)'
         }).css({
-            width: '100px',
+            width: '120px',
             margin: '0 10px 0 0',
             float: 'left',
             border: '1px solid black',
