@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.2.5
+// @version      1.3.0
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -16,7 +16,7 @@
 
 /* jshint ignore:start */
 var inline_src = (<><![CDATA[
-/* jshint ignore:end */
+    /* jshint ignore:end */
     /* jshint esnext: false */
     /* jshint esversion: 6 */
 
@@ -28,7 +28,7 @@ var inline_src = (<><![CDATA[
     const Main = unsafeWindow.Main;
 
     //noinspection JSUnresolvedFunction, JSUnresolvedVariable
-    Main.LeproWatch = createObjectIn(unsafeWindow.Main, {defineAs: 'LeproWatch'});
+    Main.LeproWatch = createObjectIn(unsafeWindow.Main, { defineAs: 'LeproWatch' });
     //noinspection JSUnresolvedVariable
     Main.LeproWatch.version = GM_info.script.version || "1.2.5";
     //noinspection JSUnresolvedVariable
@@ -86,10 +86,78 @@ var inline_src = (<><![CDATA[
         Main.LeproWatch.db.onupgradeneeded = (c) => {
             //noinspection JSUnresolvedFunction
             c.target.result
-                .createObjectStore('logs', {keyPath: 'id'})
-                .createIndex('room', 'room', {unique: false});
+                .createObjectStore('logs', { keyPath: 'id' })
+                .createIndex('room', 'room', { unique: false });
             Main.LeproWatch.connectToDatabase();
         };
+    };
+
+    Main.LeproWatch.getTimes = (time) => {
+        let t, c, a;
+        if (time == 'moments ago') {
+            t = 0;
+            c = 60000;
+            a = '30 sec';
+        } else if (time.indexOf('min') != -1) {
+            t = parseInt(time.substring(0, time.length - 3));
+            c = 60000;
+            a = '30 sec';
+        } else if (time.indexOf('h') != -1) {
+            t = parseInt(time.substring(1, time.length - 1));
+            c = 3600000;
+            a = '30 min';
+        } else if (time.indexOf('d') != -1) {
+            t = parseInt(time.substring(1, time.length - 1));
+            c = 86400000;
+            a = '12 hours';
+        } else {
+            // something strange
+            //debugger;
+        }
+        return { timestamp: t * c + (c / 2 | 0), accuracy: a };
+    };
+
+    Main.LeproWatch.setTimes = (time) => {
+        const t = Date.now() - time;
+        let result;
+
+        if (t < 59999) {
+            result = 'moments ago';
+        } else if (t < 3600000) {
+            result = (t / 60000 | 0) + 'min';
+        } else if (t < 86400000) {
+            result = '~' + (t / 3600000 | 0) + 'h';
+        } else {
+            result = '~' + (t / 86400000 | 0) + 'd';
+        }
+        return result;
+    };
+
+    Main.LeproWatch.formatTime = (time) => {
+        const d = new Date(time);
+        const year = d.getFullYear();
+
+        let day = d.getDate();
+        if (day < 10) {
+            day = "0" + day;
+        }
+        let month = d.getMonth() + 1;
+        if (month < 10) {
+            month = "0" + month;
+        }
+        let hours = d.getHours();
+        if (hours < 10) {
+            hours = "0" + hours;
+        }
+        let minutes = d.getMinutes();
+        if (minutes < 10) {
+            minutes = "0" + minutes;
+        }
+        let seconds = d.getSeconds();
+        if (seconds < 10) {
+            seconds = "0" + seconds;
+        }
+        return day + "." + month + "." + year + " " + hours + ":" + minutes + ":" + seconds;
     };
 
     Main.LeproWatch.collectLogs = () => {
@@ -107,14 +175,15 @@ var inline_src = (<><![CDATA[
                 .trim();
 
             const classes = Array.from(el.classList).filter(item => item !== 'not_read');
-
+            const times = Main.LeproWatch.getTimes(el.getElementsByClassName("ago")[0].innerHTML);
             //noinspection JSUnresolvedVariable
             return {
                 'id': parseInt(el.dataset.id),
                 'cycle': parseInt(el.dataset.c),
                 'room': Main.LeproWatch.getRoomId(),
                 'html': html,
-                'time': Date.now(),
+                'time': Date.now() - times.timestamp,
+                'accuracy': times.accuracy,
                 'text': el.textContent.trim(),
                 'index': index,
                 'classes': classes.join(' ')
@@ -174,7 +243,7 @@ var inline_src = (<><![CDATA[
                 }
                 Main.LeproWatch.renderLogs(rows, true);
             }
-        }
+        };
     };
 
     // Helpers.
@@ -224,7 +293,7 @@ var inline_src = (<><![CDATA[
             } else {
                 Main.LeproWatch.renderLogs(rows);
             }
-        }
+        };
     };
 
     // UI functions
@@ -259,6 +328,7 @@ var inline_src = (<><![CDATA[
 
         logs.sort((a, b) => {
             if (a.cycle !== b.cycle) return a.cycle > b.cycle ? -1 : 1;
+            if (a.room !== b.room) return a.room > b.room ? -1 : 1;
             if (a.time !== b.time) return a.time > b.time ? -1 : 1;
             return a.index > b.index ? -1 : 1;
         });
@@ -281,8 +351,12 @@ var inline_src = (<><![CDATA[
                 row.appendTo(content);
                 lastRoom = roomName;
             }
+            // ----------------------------------------- Printing log item ----------------------------------------
+            const time = Main.LeproWatch.formatTime(log.time);
+            const timeAgo = Main.LeproWatch.setTimes(log.time);
+            const timestamp = `<span class="ago" title="${time} ±${log.accuracy}">${timeAgo}</span>`;
 
-            const row = $('<div>').addClass(log.classes).append(log.html.trim());
+            const row = $('<div>').addClass(log.classes).append(timestamp + log.html.trim());
             row.appendTo(content);
         });
     };
@@ -319,7 +393,7 @@ var inline_src = (<><![CDATA[
         const button = $('<a>').addClass('butmini').append((hasText ? text : ''));
         button.on('click', func);
         button.appendTo(parent);
-        $('<img>').attr({src: src, title: text}).appendTo(button);
+        $('<img>').attr({ src: src, title: text }).appendTo(button);
     };
 
     Main.LeproWatch.fill = () => {
@@ -329,7 +403,7 @@ var inline_src = (<><![CDATA[
 
         $('<div>').addClass('objtitle').html("<img src='http://twinoid.com/img/icons/archive.png'> LeproWatch archive! <img src='http://twinoid.com/img/icons/archive.png'>").appendTo(mainDiv);
 
-        const menu = $('<div>').addClass('replybuttons').css({padding: '2px 7px 0'}).appendTo(mainDiv);
+        const menu = $('<div>').addClass('replybuttons').css({ padding: '2px 7px 0' }).appendTo(mainDiv);
         const roomSelector = $('<select>').addClass('roomChanger').appendTo(mainDiv);
         const searchBox = $('<input type="text">').addClass('searchBox').appendTo(menu);
         const logs = $('<div>').addClass('logs').appendTo(mainDiv);
@@ -395,10 +469,10 @@ var inline_src = (<><![CDATA[
 
         tab.on("mouseover", function () {
             Main.showTip($(this)[0], `
-                <div class='tiptop'><div class='tipbottom'><div class='tipbg'><div class='tipcontent'> 
-                <h1>LeproWatch</h1> <p> ${Main.LeproWatch.decs} </p> 
-                </div></div></div></div>
-            `);
+    <div class='tiptop'><div class='tipbottom'><div class='tipbg'><div class='tipcontent'>
+    <h1>LeproWatch</h1> <p> ${Main.LeproWatch.decs} </p>
+    </div></div></div></div>
+    `);
         }).on("mouseout", function () {
             Main.hideTip();
         });
@@ -420,7 +494,7 @@ var inline_src = (<><![CDATA[
         document.addEventListener('lw:connected', Main.LeproWatch.collectLogs);
 
         setInterval(function () {
-            if (! document.querySelectorAll('#leprowatch').length) { //If the page has been updated
+            if (!document.querySelectorAll('#leprowatch').length) { //If the page has been updated
                 Main.LeproWatch.addArchiveTab();
                 Main.LeproWatch.collectLogs();
             }
@@ -433,7 +507,7 @@ var inline_src = (<><![CDATA[
         Main.LeproWatch.init();
     }
 
-/* jshint ignore:start */
+    /* jshint ignore:start */
 ]]></>).toString();
 var c = Babel.transform(inline_src, { presets: [ "es2015", "es2016" ] });
 eval(c.code);
