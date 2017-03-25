@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.3.0
+// @version      1.3.1
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -10,7 +10,9 @@
 // @require      https://code.jquery.com/jquery-2.2.1.min.js
 // @require      https://raw.githubusercontent.com/cowboy/jquery-throttle-debounce/v1.1/jquery.ba-throttle-debounce.min.js
 // @include      http://mush.twinoid.com/
+// @include      http://mush.twinoid.com/play
 // @include      http://mush.vg/
+// @include      http://mush.vg/play
 // @downloadURL  https://github.com/tamtamchik/mush-scripts/raw/master/leproWatch.user.js
 // ==/UserScript==
 
