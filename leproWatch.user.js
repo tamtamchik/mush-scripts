@@ -429,7 +429,7 @@ var inline_src = (<><![CDATA[
             'derekhogan':'Derek',
             'andiegraham':'Andie'
         };
-        var preferredSearchList=['pic_hungry'];
+        var preferredSearchList=['pic_hungry|pill'];
         for (var i=0;i<15;i++) {preferredSearchList.push(shortName[Main.charList(i)]);} // wrong function, returns something like "laikuanti" instead of "Kuan Ti"
         var preferredSearches = $('<datalist id="preferredSearches">');
         //preferredSearches.attr("id")="preferredSearches";
