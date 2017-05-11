@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.3.1
+// @version      1.3.2
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -233,7 +233,9 @@ var inline_src = (<><![CDATA[
         logStore.openCursor().onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
-                if (cursor.value.text.toLowerCase().includes(text.toLowerCase())) {
+                //debugger;
+                var regexp=new RegExp(text, "i");
+                if (cursor.value.html.match(regexp)) {
                     rows.push(cursor.value);
                 }
                 //noinspection JSUnresolvedFunction
@@ -407,7 +409,33 @@ var inline_src = (<><![CDATA[
 
         const menu = $('<div>').addClass('replybuttons').css({ padding: '2px 7px 0' }).appendTo(mainDiv);
         const roomSelector = $('<select>').addClass('roomChanger').appendTo(mainDiv);
-        const searchBox = $('<input type="text">').addClass('searchBox').appendTo(menu);
+
+        const shortName={
+            'wangchao':'Chao',
+            'paolarinaldo':'Paola',
+            'kimjinsu':'Jin Su',
+            'laikuanti':'Kuan Ti',
+            'friedabergmann':'Frieda',
+            'rolandzuccali':'Roland',
+            'stephenseagull':'Stephen',
+            'gioelerinaldo':'Gioele',
+            'ralucatomescu':'Raluca',
+            'zhongchun':'Chun',
+            'jianghua':'Hua',
+            'finolakeegan':'Finola',
+            'eleeshawilliams':'Eleesha',
+            'janicekent':'Janice',
+            'iansoulton':'Ian',
+            'derekhogan':'Derek',
+            'andiegraham':'Andie'
+        };
+        var preferredSearchList=['pic_hungry'];
+        for (var i=0;i<15;i++) {preferredSearchList.push(shortName[Main.charList(i)]);} // wrong function, returns something like "laikuanti" instead of "Kuan Ti"
+        var preferredSearches = $('<datalist id="preferredSearches">');
+        //preferredSearches.attr("id")="preferredSearches";
+        preferredSearches.appendTo(menu);
+        $.each(preferredSearchList,(i,x)=>$('<option value="'+x+'">').appendTo(preferredSearches));
+        const searchBox = $('<input type="text" list="preferredSearches">').addClass('searchBox').appendTo(menu);
         const logs = $('<div>').addClass('logs').appendTo(mainDiv);
 
         roomSelector.css({
@@ -451,7 +479,8 @@ var inline_src = (<><![CDATA[
         Main.LeproWatch.addButton('/img/icons/ui/close.png', 'Reset', true, Main.LeproWatch.resetLogs, menu);
 
         roomSelector.on('change', e => Main.LeproWatch.loadLogs(e.target.value));
-        searchBox.on('keyup', $.debounce(300, e => Main.LeproWatch.search(e.target.value)));
+        searchBox.on('input', $.debounce(300, e => Main.LeproWatch.search(e.target.value)));
+
     };
 
     Main.LeproWatch.addArchiveTab = () => {
