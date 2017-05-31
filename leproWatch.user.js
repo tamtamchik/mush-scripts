@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.3.2
+// @version      1.3.3
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
