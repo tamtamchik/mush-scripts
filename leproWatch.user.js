@@ -32,7 +32,7 @@ var inline_src = (<><![CDATA[
     //noinspection JSUnresolvedFunction, JSUnresolvedVariable
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, { defineAs: 'LeproWatch' });
     //noinspection JSUnresolvedVariable
-    Main.LeproWatch.version = GM_info.script.version || "1.2.5";
+    Main.LeproWatch.version = GM_info.script.version || "1.3.3";
     //noinspection JSUnresolvedVariable
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
