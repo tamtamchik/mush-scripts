@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeproWatch
 // @namespace    http://tamtamchika.net/
-// @version      1.4.0
+// @version      1.4.1
 // @grant        unsafeWindow
 // @description  Saves all logs.
 // @author       tamtamchik
@@ -32,7 +32,7 @@ var inline_src = (<><![CDATA[
     //noinspection JSUnresolvedFunction, JSUnresolvedVariable
     Main.LeproWatch = createObjectIn(unsafeWindow.Main, { defineAs: 'LeproWatch' });
     //noinspection JSUnresolvedVariable
-    Main.LeproWatch.version = GM_info.script.version || "1.3.3";
+    Main.LeproWatch.version = GM_info.script.version || "1.4.1";
     //noinspection JSUnresolvedVariable
     Main.LeproWatch.indexedDB = unsafeWindow.indexedDB || unsafeWindow.mozIndexedDB || unsafeWindow.webkitIndexedDB || unsafeWindow.msIndexedDB;
     Main.LeproWatch.decs = 'Log collector by @tamtamchik. Leprosorium casting!';
@@ -84,6 +84,23 @@ var inline_src = (<><![CDATA[
     Main.LeproWatch.db.onsuccess = (c) => {
         Main.LeproWatch.connection = c.target.result;
         Main.LeproWatch.emitEvent('lw:connected');
+
+        // check if this is a new ship
+        Main.LeproWatch.connection
+            .transaction(['logs'], 'readonly')
+            .objectStore('logs')
+            .openCursor().onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                if (Main.curCycle()<cursor.value.cycle) {
+                    Main.LeproWatch.resetLogs();
+                    return;
+                }
+                cursor.continue();
+            }
+        };
+
+
     };
     Main.LeproWatch.db.onupgradeneeded = (c) => {
         //noinspection JSUnresolvedFunction
@@ -308,6 +325,7 @@ Main.LeproWatch.resetLogs = () => {
     //noinspection JSCheckFunctionSignatures,JSUnresolvedFunction
     Main.LeproWatch.connection.transaction(['logs'], 'readwrite').objectStore('logs').clear();
     Main.LeproWatch.clearLogView();
+    Main.LeproWatch.loadLogs();
 };
 
 Main.LeproWatch.clearLogView = () => {
@@ -346,9 +364,9 @@ Main.LeproWatch.renderLogs = (logs, search = false) => {
 
         if (!content.find(`.cdChatPack[data-c="${log.cycle}"]`).length) {
             // init cdChatPack
-            cdChatPack = $(`<div class="cdChatPack" data-c="${log.cycle}"></div>`);
+            cdChatPack = $(`<div class="cdChatPack" data-c="${log.cycle}">`);
             {
-                const day_cycle = $(`<div class="day_cycle" data-c="${log.cycle}"></div>`);
+                const day_cycle = $(`<div class="day_cycle" data-c="${log.cycle}">`);
                 {
                     const imgminus = $(`<img class="cdMin moreless" src="/img/icons/ui/less.png" onclick="Main.minimizeChatPack($(this).parents('.cdChatPack'));return false;">`);
                     imgminus.appendTo(day_cycle);
@@ -368,14 +386,13 @@ Main.LeproWatch.renderLogs = (logs, search = false) => {
         }
 
         if (search && !cdChatPack.find(`.day_cycle.mush[data-room="${roomName}"]`).length) {
-            $(`<div class='day_cycle mush' data-room="${roomName}"></div>`).append(`&nbsp;${roomName}`).appendTo(cdChatPack.find(".cdContent"));
+            $(`<div class='day_cycle mush' data-room="${roomName}">`).append(`&nbsp;${roomName}`).appendTo(cdChatPack.find(".cdContent"));
         }
         // ----------------------------------------- Printing log item ----------------------------------------
         const time = Main.LeproWatch.formatTime(log.time);
         const timeAgo = Main.LeproWatch.setTimes(log.time);
-        const timestamp = `<span class="ago" title="${time} ±${log.accuracy}">${timeAgo}</span>`;
-        const row = $('<div></div>').addClass(log.classes).append(log.html.trim());
-        row.find(".clear").before(timestamp);
+        const row = $('<div>').addClass(log.classes).append(log.html.trim());
+        row.find(".clear").before(`<span class="ago" title="${time} ±${log.accuracy}">${timeAgo}</span>`);
         row.appendTo(cdChatPack.find(".cdContent"));
     });
 };
@@ -446,9 +463,8 @@ Main.LeproWatch.fill = () => {
         'terrencearcher':'Terrence'
     };
     var preferredSearchList=['pic_hungry|pill','pic_disease'];
-    for (var i=0;i<=15;i++) {preferredSearchList.push(shortName[Main.charList(i)]);}
+    $.each(shortName,function(i,name){preferredSearchList.push(name);});
     var preferredSearches = $('<datalist id="preferredSearches">');
-    //preferredSearches.attr("id")="preferredSearches";
     preferredSearches.appendTo(menu);
     $.each(preferredSearchList,(i,x)=>$('<option value="'+x+'">').appendTo(preferredSearches));
     const searchBox = $('<input type="text" list="preferredSearches">').addClass('searchBox').appendTo(menu);
@@ -536,6 +552,7 @@ Main.LeproWatch.init = () => {
     console.log('[LeproWatch] Init...');
     Main.LeproWatch.currentRoom = Main.LeproWatch.getRoomId();
     Main.LeproWatch.connectToDatabase();
+
     Main.LeproWatch.addArchiveTab();
 
     document.addEventListener('lw:connected', Main.LeproWatch.collectLogs);
